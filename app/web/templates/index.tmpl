@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>{{ .Title }}</title>
+    <link rel="shortcut icon" href="{{ .Logo }}" type="image/x-icon">
+    <link rel="apple-touch-icon-precomposed" href="{{ .Logo }}">
+    <link rel="stylesheet" href="/static/css/main.css">
+  </head>
+  <body>
+    <div id="root">
+      <div class="min-h-screen">
+        <div class="min-h-screen flex flex-col max-w-screen-2xl mx-auto xl:flex-row">
+          <div class="p-4 w-full xl:w-auto xl:max-w-xs xl:min-h-screenborder-0 border-solid border-gray-300 dark:border-gray-700 border-b xl:border-r xl:border-b-0">
+            <div class="p-2 xl:p-4 flex flex-nowrap justify-center items-center gap-2 xl:flex-wrap">
+              <img src="{{ .Logo }}" alt="{{ .Title }}" class="inline-block w-16 h-16">
+              <h1>{{ .Title }}</h1>
+            </div>
+          </div>
+          <div class="p-4 flex-grow min-h-screen">
+            <ul>
+              {{- range .Categories }}
+              <li class="mt-12 first:mt-0 xl:first:mt-6">
+                <h2 class="dark:text-slate-200 text-2xl text-slate-600 font-light py-2 px-4">{{ .Name }}</h2>
+                <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1 lg:gap-2 lg:gap-y-4">
+                  {{- range .Services }}
+                  <li class="p-4 flex gap-4">
+                    <span class="flex-shrink-0 flex">
+                      <a href="{{ .URL }}" target="_blank" rel="noreffer" title="{{ .Name }}" class="self-center">
+                        <img src="{{ .Icon }}" class="block overflow-hidden bg-contain w-16 h-16 rounded-2xl border border-black/5 shadow-sm">
+                      </a>
+                    </span>
+                    <div>
+                      <h3 class="text-lg mt-1 font-semibold line-clamp-1">
+                        <a href="{{ .URL }}" target="_blank" rel="noreffer" title="" class="">{{ .Name }}</a>
+                      </h3>
+                      <p class="text-sm text-black/50 dark:text-white/50 line-clamp-1">
+                        <a href="{{ .URL }}" target="_blank" rel="noreffer" title="" class="">{{ .Description }}</a>
+                      </p>
+                    </div>
+                  </li>
+                  {{- end }}
+                </ul>
+              </li>
+              {{- end }}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
