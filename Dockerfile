@@ -4,7 +4,7 @@ ARG CGO_ENABLED=0
 WORKDIR /build
 RUN apk add --no-cache --update tzdata ca-certificates
 COPY . .
-RUN go build -o homepage ./app
+RUN go build -mod vendor -o homepage ./app
 
 FROM scratch
 WORKDIR /srv
