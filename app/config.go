@@ -66,12 +66,6 @@ func (c *Config) setDefaults() error {
 		c.Title = "Homepage"
 	}
 
-	if c.Logo == "" {
-		c.Logo = filepath.Join(staticIconsPattern, "logo.png")
-	} else {
-		c.Logo = filepath.Join(iconsPattern, c.Logo)
-	}
-
 	if c.IconsDir == "" {
 		c.IconsDir = "/icons"
 	}
@@ -84,6 +78,12 @@ func (c *Config) setDefaults() error {
 	userIcons, err := getUserIcons(c.IconsDir)
 	if err != nil {
 		return err
+	}
+
+	if c.Logo == "" {
+		c.Logo = c.findIcon(userIcons, staticIcons, "logo.png")
+	} else {
+		c.Logo = c.findIcon(userIcons, staticIcons, c.Logo)
 	}
 
 	for i, category := range c.Categories {

@@ -3,8 +3,6 @@ name: Release
 
 on:
   push:
-    branches:
-    - main
     tags:
     - 'v*.*.*'
 
@@ -42,6 +40,6 @@ jobs:
 
         docker buildx build \
             --push \
-            --platform linux/amd64 \
+            --platform linux/amd64,linux/arm64,linux/arm/v7 \
             --tag rantanevich/homepage:$IMAGE_TAG \
             .

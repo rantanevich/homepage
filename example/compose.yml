@@ -1,0 +1,12 @@
+---
+services:
+  homepage:
+    image: rantanevich/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    environment:
+      CONFIG_PATH: /etc/homepage/config.yml
+    volumes:
+    - ./config:/etc/homepage:ro
+    ports:
+    - 3000:3000/tcp
