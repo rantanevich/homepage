@@ -1,94 +1,38 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"embed"
-	"io/fs"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"text/template"
 	"time"
-)
 
-var (
-	//go:embed web/*
-	webFS embed.FS
-
-	indexBody []byte
+	"github.com/rantanevich/homepage/app/api"
+	"github.com/rantanevich/homepage/app/config"
 )
 
 func main() {
-	conf, err := LoadConfig()
-	fatal(err)
-
-	body, err := renderIndexPage(conf)
-	fatal(err)
-	indexBody = body
-
-	router, err := setupRouter(conf.IconsDir)
-	fatal(err)
-
-	srv := &http.Server{
-		Addr:              ":3000",
-		Handler:           router,
-		ReadHeaderTimeout: 5 * time.Second,
-		WriteTimeout:      10 * time.Second,
-		IdleTimeout:       30 * time.Second,
+	conf, err := config.Load()
+	if err != nil {
+		log.Fatalf("[FATAL] %v", err)
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
+	srv := api.New()
+	if err := srv.RenderIndexPage(conf); err != nil {
+		log.Fatalf("[FATAL] cannot render index.html: %v", err)
+	}
 
-	go func() {
-		log.Printf("[INFO] http server started on %s", srv.Addr)
-		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Printf("[ERROR] %v", err)
-		}
-	}()
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
-	<-ctx.Done()
+	go srv.Run(conf.Port, conf.IconsDir)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	sig := <-sigCh
+	log.Printf("[INFO] received signal %s", sig)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	log.Printf("[INFO] http server is stopping...")
-	fatal(srv.Shutdown(ctx))
-}
-
-func setupRouter(iconsDir string) (*http.ServeMux, error) {
-	staticFS, err := fs.Sub(webFS, "web/static")
-	if err != nil {
-		return nil, err
-	}
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", indexHandler())
-	mux.Handle(staticPattern, http.StripPrefix(staticPattern, http.FileServer(http.FS(staticFS))))
-	mux.Handle(iconsPattern, http.StripPrefix(iconsPattern, http.FileServer(http.Dir(iconsDir))))
-
-	return mux, nil
-}
-
-func indexHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write(indexBody)
-	}
-}
-
-func renderIndexPage(conf *Config) ([]byte, error) {
-	tmpl, err := template.ParseFS(webFS, "web/templates/index.tmpl")
-	if err != nil {
-		return nil, err
-	}
-
-	page := bytes.NewBuffer(nil)
-	if err := tmpl.Execute(page, conf); err != nil {
-		return nil, err
-	}
-	return page.Bytes(), nil
+	srv.Shutdown(ctx)
 }

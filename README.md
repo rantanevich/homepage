@@ -12,6 +12,7 @@ The application relies on a configuration file in YAML format. By default, it lo
 title: Homepage
 logo: logo.png
 icons: /icons
+port: 3000
 
 categories:
 - name: Management
