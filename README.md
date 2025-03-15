@@ -1,47 +1,82 @@
 # Homepage
 
-This is a simple web application that serves as a customizable homepage, allowing users to display various services with corresponding icons, descriptions, and URLs. The application reads configuration from a YAML file and serves a web page based on the provided data.
+A lightweight and customizable web application that serves as a dynamic homepage for organizing and accessing your services. Built with Go, it provides a clean and modern interface to display your services with icons, descriptions, and URLs.
 
 Inspired by [notclickable-jordan/starbase-80](https://github.com/notclickable-jordan/starbase-80)
 
+## Features
+
+- Dynamic configuration loading and hot-reload support
+- Clean and responsive web interface
+- Custom icons support
+- JSON logging
+- Docker labels support
+
 ## Configuration
 
-The application relies on a configuration file in YAML format. By default, it looks for a file named `config.yml` in the root directory, but you can specify a different path using the `CONFIG_PATH` environment variable.
+### Environment Variables
+
+- `HOMEPAGE_PORT`: HTTP server port
+- `HOMEPAGE_LOGLEVEL`: Logging level (default: `info`)
+- `HOMEPAGE_TITLE`: Page title
+- `HOMEPAGE_LOGO`: Logo icon
+- `HOMEPAGE_ICONSDIR`: Custom icons directory
+- `HOMEPAGE_PROVIDERS_FILE_FILENAME`: Load dynamic configuration from a file (default: `""`)
+- `HOMEPAGE_PROVIDERS_FILE_WATCH`: Watch provider (default: `true`)
+- `HOMEPAGE_PROVIDERS_DOCKER`: Enable Docker backend with default settings (default: `false`)
+- `HOMEPAGE_PROVIDERS_DOCKER_ENDPOINT`: Docker server endpoint (default: `unix:///var/run/docker.sock`)
+- `HOMEPAGE_PROVIDERS_DOCKER_WATCH`: Watch Docker events (default: `true`)
+
+### Providers
+
+#### File
+
+Dynamic configuration:
 
 ```yaml
-title: Homepage
-logo: logo.png
-icons: /icons
-port: 3000
+Entertainment:
+  Instagram:
+    url: https://www.instagram.com/
+    icon: sh-instagram
+  Spotify:
+    url: https://open.spotify.com/
+    icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/spotify.png
 
-categories:
-- name: Management
-  services:
-  - name: Kafka UI
-    url: https://grafana.example.com/
-    icon: kafka-ui
-- name: Monitoring
-  services:
-  - name: Grafana
+Monitoring:
+  Grafana:
     description: Data visualization service
     url: https://grafana.example.com/
-    icon: grafana
-  - name: Prometheus
+    icon: grafana.png
+  Prometheus:
     description: Monitoring system
     url: https://prometheus.example.com/
-    icon: prometheus
+    icon: prometheus.webp
 ```
 
-### Custom Icons
+#### Docker
 
-You can provide custom icons by specifying a directory path in the `icons` field of your `config.yml`. The application will attempt to load icons from this directory first, falling back to the embedded static icons if necessary.
+Dynamic configuration with Docker Labels:
 
-### Icon Resolution Order
+```yml
+services:
+  web:
+    image: nginx:latest
+    labels:
+    - homepage.group=Web Services
+    - homepage.service=Nginx
+    - homepage.url=https://nginx.org/
+    - homepage.icon=sh-nginx
+    - homepage.description=HTTP web server
+```
 
-The application resolves icons using the following order:
+### Icon Resolution
 
-1. The application first checks the directory specified in the `icons` field of your `config.yml`.
-2. If the icon is not found in the `icons`, the application searches the embedded static icons.
-3. If the icon is still not found, the application uses a default icon (`no-icon.svg`).
+Icons are resolved in the following order:
 
-Additionally, you can specify a URL as the icon field value, and the application will use the image directly from that URL.
+1. If path is empty, returns default icon (`/static/icons/no-icon.svg`)
+2. If path starts with `http` or `/`, uses the path as is
+3. For other paths:
+   - If path starts with `sh-`, fetches icon from [selfhst/icons](https://github.com/selfhst/icons) CDN
+   - Otherwise, fetches icon from [homarr-labs/dashboard-icons](https://github.com/homarr-labs/dashboard-icons) CDN
+
+Note: If file extension is not provided in the icon path, `.png` will be used as default.
