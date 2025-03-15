@@ -20,23 +20,23 @@
           </div>
           <div class="p-4 flex-grow min-h-screen">
             <ul>
-              {{- range .Categories }}
+              {{- range $groupName, $services := .Groups }}
               <li class="mt-12 first:mt-0 xl:first:mt-6">
-                <h2 class="dark:text-slate-200 text-2xl text-slate-600 font-light py-2 px-4">{{ .Name }}</h2>
+                <h2 class="dark:text-slate-200 text-2xl text-slate-600 font-light py-2 px-4">{{ $groupName }}</h2>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1 lg:gap-2 lg:gap-y-4">
-                  {{- range .Services }}
+                  {{- range $serviceName, $service := $services }}
                   <li class="p-4 flex gap-4">
                     <span class="flex-shrink-0 flex">
-                      <a href="{{ .URL }}" target="_blank" rel="noreffer" title="{{ .Name }}" class="self-center">
-                        <img src="{{ .Icon }}" class="block overflow-hidden bg-contain w-16 h-16 rounded-2xl border border-black/5 shadow-sm">
+                      <a href="{{ $service.URL }}" target="_blank" rel="noreffer" title="{{ $serviceName }}" class="self-center">
+                        <img src="{{ $service.Icon }}" class="block overflow-hidden bg-contain w-16 h-16 rounded-2xl border border-black/5 shadow-sm">
                       </a>
                     </span>
                     <div>
                       <h3 class="text-lg mt-1 font-semibold line-clamp-1">
-                        <a href="{{ .URL }}" target="_blank" rel="noreffer" title="" class="">{{ .Name }}</a>
+                        <a href="{{ $service.URL }}" target="_blank" rel="noreffer" title="" class="">{{ $serviceName }}</a>
                       </h3>
                       <p class="text-sm text-black/50 dark:text-white/50 line-clamp-1">
-                        <a href="{{ .URL }}" target="_blank" rel="noreffer" title="" class="">{{ .Description }}</a>
+                        <a href="{{ $service.URL }}" target="_blank" rel="noreffer" title="" class="">{{ $service.Description }}</a>
                       </p>
                     </div>
                   </li>

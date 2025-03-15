@@ -1,24 +1,18 @@
 ---
-title: Example
-logo: mike
-icons: /etc/homepage/icons
-
-categories:
-- name: Entertainment
-  services:
-  - name: Instagram
+Entertainment:
+  Instagram:
     url: https://www.instagram.com/
-    icon: instagram
-  - name: Spotify
+    icon: sh-instagram
+  Spotify:
     url: https://open.spotify.com/
     icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/spotify.png
-- name: Monitoring
-  services:
-  - name: Grafana
+
+Monitoring:
+  Grafana:
     description: Data visualization service
     url: https://grafana.example.com/
     icon: grafana.png
-  - name: Prometheus
+  Prometheus:
     description: Monitoring system
     url: https://prometheus.example.com/
-    icon: prometheus
+    icon: prometheus.webp

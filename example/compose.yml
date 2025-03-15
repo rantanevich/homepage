@@ -5,7 +5,10 @@ services:
     container_name: homepage
     restart: unless-stopped
     environment:
-      CONFIG_PATH: /etc/homepage/config.yml
+      HOMEPAGE_PORT: 3000
+      HOMEPAGE_TITLE: HomePage
+      HOMEPAGE_LOGO: homer.webp
+      HOMEPAGE_PROVIDERS_FILE_FILENAME: /etc/homepage/config.yml
     volumes:
     - ./config:/etc/homepage:ro
     ports:
