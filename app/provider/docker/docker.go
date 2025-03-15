@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -32,7 +32,11 @@ func (p *Provider) SetDefaults() {
 	p.Watch = true
 }
 
-func (p *Provider) Provide(ctx context.Context, wg *sync.WaitGroup, updateCh chan<- dynamic.Message) error {
+func (p *Provider) ProviderName() string {
+	return "docker"
+}
+
+func (p *Provider) Provide(ctx context.Context, wg *sync.WaitGroup, updateCh chan<- dynamic.Message, log *slog.Logger) error {
 	wg.Add(1)
 
 	go func() {
@@ -53,7 +57,7 @@ func (p *Provider) Provide(ctx context.Context, wg *sync.WaitGroup, updateCh cha
 			conf := buildConfig(containers)
 			if conf != nil {
 				updateCh <- dynamic.Message{
-					ProviderName: "docker",
+					ProviderName: p.ProviderName(),
 					Config:       conf,
 				}
 			}
@@ -72,24 +76,28 @@ func (p *Provider) Provide(ctx context.Context, wg *sync.WaitGroup, updateCh cha
 						return nil
 					case event := <-eventCh:
 						if event.Action == "start" || event.Action == "die" {
-							log.Printf("[DEBUG] docker provider received: %+v", event)
+							log.Debug(
+								"received event",
+								slog.String("event_from", event.Actor.Attributes["name"]),
+								slog.String("event_action", string(event.Action)),
+							)
 							containers, err := dockerClient.ContainerList(ctx, container.ListOptions{})
 							if err != nil {
-								log.Printf("[ERROR] failed to list docker containers: %v", err)
+								log.Error("failed to list containers", slog.String("error", err.Error()))
 								continue
 							}
 
 							conf := buildConfig(containers)
 							if conf != nil {
 								updateCh <- dynamic.Message{
-									ProviderName: "docker",
+									ProviderName: p.ProviderName(),
 									Config:       conf,
 								}
 							}
 						}
 					case err := <-errCh:
 						if errors.Is(err, io.EOF) {
-							log.Printf("[DEBUG] docker event stream closed")
+							log.Debug("event stream closed")
 						}
 						return err
 					}

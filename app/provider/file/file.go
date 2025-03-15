@@ -2,7 +2,7 @@ package file
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"sync"
 
@@ -12,8 +12,6 @@ import (
 	"github.com/rantanevich/homepage/app/config/dynamic"
 	"github.com/rantanevich/homepage/app/provider"
 )
-
-const providerName = "file"
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -27,9 +25,13 @@ func (p *Provider) SetDefaults() {
 	p.Watch = true
 }
 
-func (p *Provider) Provide(ctx context.Context, wg *sync.WaitGroup, updateCh chan<- dynamic.Message) error {
+func (p *Provider) ProviderName() string {
+	return "file"
+}
+
+func (p *Provider) Provide(ctx context.Context, wg *sync.WaitGroup, updateCh chan<- dynamic.Message, log *slog.Logger) error {
 	if p.Watch {
-		if err := p.addWatcher(ctx, wg, updateCh); err != nil {
+		if err := p.addWatcher(ctx, wg, updateCh, log); err != nil {
 			return err
 		}
 	}
@@ -40,14 +42,14 @@ func (p *Provider) Provide(ctx context.Context, wg *sync.WaitGroup, updateCh cha
 	}
 
 	updateCh <- dynamic.Message{
-		ProviderName: providerName,
+		ProviderName: p.ProviderName(),
 		Config:       conf,
 	}
 
 	return nil
 }
 
-func (p *Provider) addWatcher(ctx context.Context, wg *sync.WaitGroup, updateCh chan<- dynamic.Message) error {
+func (p *Provider) addWatcher(ctx context.Context, wg *sync.WaitGroup, updateCh chan<- dynamic.Message, log *slog.Logger) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
@@ -71,15 +73,23 @@ func (p *Provider) addWatcher(ctx context.Context, wg *sync.WaitGroup, updateCh 
 				if !ok {
 					return
 				}
-				log.Printf("[DEBUG] file event: %v", event)
+				log.Debug(
+					"received event",
+					slog.String("event_from", event.Name),
+					slog.String("event_action", event.Op.String()),
+				)
 				if event.Has(fsnotify.Write) {
 					conf, err := p.loadFileConfig()
 					if err != nil {
-						log.Printf("[ERROR] failed to load file config: %v", err)
+						log.Error(
+							"cannot load file config",
+							slog.String("filename", p.Filename),
+							slog.String("error", err.Error()),
+						)
 						continue
 					}
 					updateCh <- dynamic.Message{
-						ProviderName: providerName,
+						ProviderName: p.ProviderName(),
 						Config:       conf,
 					}
 				}
@@ -87,7 +97,10 @@ func (p *Provider) addWatcher(ctx context.Context, wg *sync.WaitGroup, updateCh 
 				if !ok {
 					return
 				}
-				log.Printf("[ERROR] file watcher event error: %v", err)
+				log.Error(
+					"received error event",
+					slog.String("error", err.Error()),
+				)
 			}
 		}
 	}()

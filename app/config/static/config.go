@@ -12,6 +12,7 @@ import (
 
 type Config struct {
 	Port      int
+	LogLevel  string
 	Title     string
 	Logo      string
 	IconsDir  string

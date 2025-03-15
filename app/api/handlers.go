@@ -2,7 +2,7 @@ package api
 
 import (
 	"io/fs"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -18,13 +18,22 @@ func (s *Server) setupRouter(iconsDir string) *http.ServeMux {
 	if err == nil {
 		router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 	} else {
-		log.Printf("[ERROR] cannot start fileserver for /static/: %v", err)
+		s.log.Error(
+			"cannot start fileserver",
+			slog.String("pattern", "/static/"),
+			slog.String("error", err.Error()),
+		)
 	}
 
 	if err := os.MkdirAll(iconsDir, 0o755); err == nil {
 		router.Handle("/icons/", http.StripPrefix("/icons/", http.FileServer(http.Dir(iconsDir))))
 	} else {
-		log.Printf("[ERROR] failed to create %s directory: %v", iconsDir, err)
+		s.log.Error(
+			"cannot start fileserver",
+			slog.String("directory", iconsDir),
+			slog.String("pattern", "/icons/"),
+			slog.String("error", err.Error()),
+		)
 	}
 
 	return router

@@ -8,6 +8,8 @@ services:
       HOMEPAGE_PORT: 3000
       HOMEPAGE_TITLE: HomePage
       HOMEPAGE_LOGO: homer.webp
+      HOMEPAGE_LOGLEVEL: info
+      HOMEPAGE_ICONSDIR: /etc/homepage/icons
       HOMEPAGE_PROVIDERS_FILE_FILENAME: /etc/homepage/config.yml
     volumes:
     - ./config:/etc/homepage:ro

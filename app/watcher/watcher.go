@@ -2,7 +2,7 @@ package watcher
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"reflect"
 	"sync"
 
@@ -12,8 +12,9 @@ import (
 )
 
 type Watcher struct {
-	wg sync.WaitGroup
+	log *slog.Logger
 
+	wg       sync.WaitGroup
 	state    map[string]dynamic.Config
 	updateCh chan dynamic.Message
 
@@ -21,8 +22,9 @@ type Watcher struct {
 	listeners []func(dynamic.Config)
 }
 
-func New(conf static.Providers) *Watcher {
+func New(conf static.Providers, log *slog.Logger) *Watcher {
 	w := &Watcher{
+		log:      log.With(slog.String("component", "watcher")),
 		updateCh: make(chan dynamic.Message, 10),
 		state:    make(map[string]dynamic.Config),
 	}
@@ -40,8 +42,9 @@ func New(conf static.Providers) *Watcher {
 
 func (w *Watcher) Start(ctx context.Context) error {
 	for _, provider := range w.providers {
-		log.Printf("[DEBUG] starting %v provider: %+v", reflect.TypeOf(provider), provider)
-		if err := provider.Provide(ctx, &w.wg, w.updateCh); err != nil {
+		logger := w.log.With(slog.String("provider", provider.ProviderName()))
+		logger.Debug("starting provider")
+		if err := provider.Provide(ctx, &w.wg, w.updateCh, logger); err != nil {
 			return err
 		}
 	}
@@ -55,22 +58,22 @@ func (w *Watcher) Start(ctx context.Context) error {
 			case <-ctx.Done():
 				return
 			case update := <-w.updateCh:
-				log.Printf("[DEBUG] received update from %s provider: %+v", update.ProviderName, update.Config)
+				logger := w.log.With(slog.String("provider", update.ProviderName))
+
+				logger.Debug("received update from provider")
 				if update.Config == nil {
-					log.Printf("[DEBUG] skipping nil config")
+					logger.Debug("skipping nil config")
 					continue
 				}
 
 				if reflect.DeepEqual(w.state[update.ProviderName], update.Config) {
-					log.Printf("[DEBUG] skipping unchanged config")
+					logger.Debug("skipping unchanged config")
 					continue
 				}
 
 				w.state[update.ProviderName] = update.Config.DeepCopy()
 
 				conf := mergeConfig(w.state)
-				log.Printf("[DEBUG] final config: %+v", conf)
-
 				for _, listener := range w.listeners {
 					listener(conf)
 				}
@@ -84,6 +87,7 @@ func (w *Watcher) Start(ctx context.Context) error {
 func (w *Watcher) Shutdown() {
 	close(w.updateCh)
 	w.wg.Wait()
+	w.log.Info("stopped")
 }
 
 func (w *Watcher) AddListener(listener func(dynamic.Config)) {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"text/template"
 	"time"
@@ -15,13 +15,16 @@ import (
 )
 
 type Server struct {
+	log *slog.Logger
+
 	indexPage  []byte
 	httpServer *http.Server
 	templates  *template.Template
 }
 
-func New() *Server {
+func New(log *slog.Logger) *Server {
 	return &Server{
+		log:       log.With(slog.String("component", "api")),
 		templates: template.Must(template.ParseFS(web.WebFS, "templates/*")),
 	}
 }
@@ -35,17 +38,17 @@ func (s *Server) Run(port int, iconsDir string) {
 		IdleTimeout:       30 * time.Second,
 	}
 
-	log.Printf("[INFO] http server started on %s", s.httpServer.Addr)
+	s.log.Info("started", slog.String("addr", s.httpServer.Addr))
 	if err := s.httpServer.ListenAndServe(); err != http.ErrServerClosed {
-		log.Printf("[ERROR] http server terminated: %v", err)
+		s.log.Error("terminated", slog.String("error", err.Error()))
 		return
 	}
-	log.Printf("[INFO] http server stopped gracefully")
+	s.log.Info("stopped", slog.String("addr", s.httpServer.Addr))
 }
 
 func (s *Server) Shutdown(ctx context.Context) {
 	if err := s.httpServer.Shutdown(ctx); err != nil {
-		log.Printf("[ERROR] failed to shutdown http server: %v", err)
+		s.log.Error("failed to shutdown", slog.String("error", err.Error()))
 	}
 }
 
@@ -63,7 +66,7 @@ func (s *Server) UpdateIndexPage(conf dynamic.Config, title, logo string) {
 	page := bytes.NewBuffer(nil)
 	err := s.templates.ExecuteTemplate(page, "index.tmpl", tmplData)
 	if err != nil {
-		log.Printf("[ERROR] failed to render index.html: %v", err)
+		s.log.Error("failed to render index.html", slog.String("error", err.Error()))
 		return
 	}
 	s.indexPage = page.Bytes()

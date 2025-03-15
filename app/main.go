@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -15,11 +16,11 @@ import (
 
 func main() {
 	conf := static.Load()
-	srv := api.New()
+	log := setupLogger(conf.LogLevel)
 
-	log.Printf("[DEBUG] conf: %+v", conf)
+	srv := api.New(log)
 
-	w := watcher.New(conf.Providers)
+	w := watcher.New(conf.Providers, log)
 	w.AddListener(func(c dynamic.Config) {
 		srv.UpdateIndexPage(c, conf.Title, conf.Logo)
 	})
@@ -29,7 +30,7 @@ func main() {
 
 	go func() {
 		if err := w.Start(ctx); err != nil {
-			log.Printf("[FATAL] cannot start watcher: %v", err)
+			log.Error("failed to start watcher", slog.String("error", err.Error()))
 			stop()
 		}
 	}()
@@ -43,4 +44,21 @@ func main() {
 
 	srv.Shutdown(ctx)
 	w.Shutdown()
+}
+
+func setupLogger(level string) *slog.Logger {
+	var logLevel slog.Level
+
+	switch level {
+	case "debug":
+		logLevel = slog.LevelDebug
+	case "warn":
+		logLevel = slog.LevelWarn
+	case "error":
+		logLevel = slog.LevelError
+	default:
+		logLevel = slog.LevelInfo
+	}
+
+	return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 }
