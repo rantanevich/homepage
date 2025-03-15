@@ -6,6 +6,7 @@ import (
 
 	"github.com/traefik/paerser/env"
 
+	"github.com/rantanevich/homepage/app/provider/docker"
 	"github.com/rantanevich/homepage/app/provider/file"
 )
 
@@ -18,7 +19,8 @@ type Config struct {
 }
 
 type Providers struct {
-	File *file.Provider
+	File   *file.Provider
+	Docker *docker.Provider `label:"allowEmpty"`
 }
 
 func (c *Config) SetDefaults() {

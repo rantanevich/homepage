@@ -31,6 +31,10 @@ func New(conf static.Providers) *Watcher {
 		w.providers = append(w.providers, conf.File)
 	}
 
+	if conf.Docker != nil {
+		w.providers = append(w.providers, conf.Docker)
+	}
+
 	return w
 }
 

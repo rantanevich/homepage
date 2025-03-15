@@ -25,6 +25,10 @@ func mergeConfig(configs map[string]dynamic.Config) dynamic.Config {
 }
 
 func ResolveIcon(path string) string {
+	if path == "" {
+		return "/static/icons/no-icon.svg"
+	}
+
 	if strings.HasPrefix(path, "http") || strings.HasPrefix(path, "/") {
 		return path
 	}

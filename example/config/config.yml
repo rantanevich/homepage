@@ -16,3 +16,5 @@ Monitoring:
     description: Monitoring system
     url: https://prometheus.example.com/
     icon: prometheus.webp
+  Example:
+    url: http://example.com/

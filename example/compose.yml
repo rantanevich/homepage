@@ -11,5 +11,12 @@ services:
       HOMEPAGE_PROVIDERS_FILE_FILENAME: /etc/homepage/config.yml
     volumes:
     - ./config:/etc/homepage:ro
+    - /var/run/docker.sock:/var/run/docker.sock
     ports:
     - 3000:3000/tcp
+    labels:
+    - homepage.group=Example
+    - homepage.service=homepage
+    - homepage.url=http://homepage.example.com
+    - homepage.icon=/static/icons/logo.png
+    - homepage.description=Start page
