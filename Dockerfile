@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS build
+FROM golang:1.24-alpine AS build
 ARG GOOS=linux
 ARG CGO_ENABLED=0
 WORKDIR /build
@@ -11,5 +11,4 @@ WORKDIR /srv
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /build/homepage /srv/homepage
-EXPOSE 3000
 ENTRYPOINT ["/srv/homepage"]
