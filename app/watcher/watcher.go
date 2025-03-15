@@ -81,6 +81,7 @@ func (w *Watcher) Start(ctx context.Context) error {
 		}
 	}()
 
+	w.log.Info("started")
 	return nil
 }
 
