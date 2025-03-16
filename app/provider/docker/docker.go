@@ -113,13 +113,17 @@ func (p *Provider) Provide(ctx context.Context, wg *sync.WaitGroup, updateCh cha
 		}
 
 		retry.Do(
-			operation,
+			operationWithRecover(operation, log),
 			retry.UntilSucceeded(),
 			retry.Delay(5*time.Second),
 			retry.MaxDelay(60*time.Second),
 			retry.Context(ctx),
 			retry.OnRetry(func(attempt uint, err error) {
-				log.Error("provider error, retrying", slog.String("error", err.Error()))
+				log.Error(
+					"provider error, retrying",
+					slog.Int("attempt", int(attempt)),
+					slog.String("error", err.Error()),
+				)
 			}),
 		)
 	}()

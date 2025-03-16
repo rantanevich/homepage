@@ -1,6 +1,10 @@
 package docker
 
 import (
+	"fmt"
+	"log/slog"
+	"runtime/debug"
+
 	"github.com/docker/docker/api/types/container"
 
 	"github.com/rantanevich/homepage/app/config/dynamic"
@@ -50,4 +54,16 @@ func keepContainer(container container.Summary) bool {
 	}
 
 	return true
+}
+
+func operationWithRecover(operation func() error, log *slog.Logger) func() error {
+	return func() (err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Error("recovered from panic", slog.String("stacktrace", string(debug.Stack())))
+				err = fmt.Errorf("panic in operation: %w", err)
+			}
+		}()
+		return operation()
+	}
 }
