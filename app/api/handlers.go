@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"runtime/debug"
 
 	"github.com/rantanevich/homepage/app/web"
 )
@@ -12,7 +13,7 @@ import (
 func (s *Server) setupRouter(iconsDir string) *http.ServeMux {
 	router := http.NewServeMux()
 
-	router.HandleFunc("/", s.indexHandler())
+	router.Handle("/", s.recoverMiddleware(s.indexHandler()))
 
 	staticFS, err := fs.Sub(web.WebFS, "static")
 	if err == nil {
@@ -37,6 +38,19 @@ func (s *Server) setupRouter(iconsDir string) *http.ServeMux {
 	}
 
 	return router
+}
+
+func (s *Server) recoverMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				s.log.Error("recovered from panic", slog.String("stacktrace", string(debug.Stack())))
+				w.Header().Set("Connection", "close")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *Server) indexHandler() http.HandlerFunc {
