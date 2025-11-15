@@ -21,8 +21,6 @@ import (
 	"github.com/rantanevich/homepage/app/provider"
 )
 
-const DockerAPIVersion = "1.24"
-
 var _ provider.Provider = (*Provider)(nil)
 
 type Provider struct {
@@ -151,7 +149,7 @@ func (p *Provider) getClientOpts() ([]client.Opt, error) {
 	}
 
 	opts := []client.Opt{
-		client.WithVersion(DockerAPIVersion),
+		client.WithAPIVersionNegotiation(),
 	}
 
 	if helper != nil {
